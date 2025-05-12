@@ -1,0 +1,189 @@
+services:
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: budgetsmart-rabbitmq
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+  #     - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+  #   volumes:
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmqctl", "status"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - budgetsmart-network
+
+  # Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: budgetsmart-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/engine/sql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U budgetsmart"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - budgetsmart-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: budgetsmart-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - budgetsmart-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # # Redis for caching
+  # redis:
+  #   image: redis:alpine
+  #   container_name: budgetsmart-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - budgetsmart-network
+
+  # # Core engine service (Golang)
+  # engine:
+  #   build:
+  #     context: ./services/engine
+  #     dockerfile: Dockerfile
+  #   container_name: budgetsmart-engine
+  #   ports:
+  #     - "${APP_PORT}:8080"
+  #   environment:
+  #     - DB_HOST=${DB_DOCKER_HOST}
+  #     - DB_PORT=${DB_PORT}
+  #     - DB_USER=${DB_USER}
+  #     - DB_PASSWORD=${DB_PASSWORD}
+  #     - DB_NAME=${DB_NAME}
+  #     - RABBITMQ_HOST=${RABBITMQ_HOST}
+  #     - RABBITMQ_PORT=${RABBITMQ_PORT}
+  #     - RABBITMQ_USER=${RABBITMQ_USER}
+  #     - RABBITMQ_PASS=${RABBITMQ_PASSWORD}
+  #     - REDIS_HOST=${REDIS_HOST}
+  #     - REDIS_PORT=${REDIS_PORT}
+  #     - APP_PORT=${APP_PORT}
+  #     - JWT_SECRET=${JWT_SECRET}
+  #     - LOG_LEVEL=${LOG_LEVEL}
+  #     - ENV=${ENV}
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./services/engine:/app
+  #     - engine_data:/app/data
+  #   networks:
+  #     - budgetsmart-network
+
+  # # ML and analytics service (Python)
+  # ml-analytics:
+  #   build:
+  #     context: ./services/ml-analytics
+  #     dockerfile: Dockerfile
+  #   container_name: budgetsmart-ml-analytics
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_USER=budgetsmart
+  #     - DB_PASSWORD=budgetsmart
+  #     - DB_NAME=budgetsmart
+  #     - RABBITMQ_HOST=rabbitmq
+  #     - RABBITMQ_PORT=5672
+  #     - RABBITMQ_USER=budgetsmart
+  #     - RABBITMQ_PASS=budgetsmart
+  #     - MODEL_STORAGE_PATH=/app/models
+  #     - APP_PORT=8081
+  #     - LOG_LEVEL=debug
+  #     - ENV=development
+  #   volumes:
+  #     - ./services/ml-analytics:/app
+  #     - ml_models:/app/models
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - budgetsmart-network
+
+  # # Notification service (Python)
+  # notification:
+  #   build:
+  #     context: ./services/notification
+  #     dockerfile: Dockerfile
+  #   container_name: budgetsmart-notification
+  #   ports:
+  #     - "8082:8082"
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq
+  #     - RABBITMQ_PORT=5672
+  #     - RABBITMQ_USER=budgetsmart
+  #     - RABBITMQ_PASS=budgetsmart
+  #     - SMTP_HOST=${SMTP_HOST:-smtp.mailtrap.io}
+  #     - SMTP_PORT=${SMTP_PORT:-2525}
+  #     - SMTP_USER=${SMTP_USER:-your_mailtrap_user}
+  #     - SMTP_PASSWORD=${SMTP_PASSWORD:-your_mailtrap_password}
+  #     - EMAIL_FROM=noreply@budgetsmart.com
+  #     - APP_PORT=8082
+  #     - LOG_LEVEL=debug
+  #     - ENV=development
+  #   volumes:
+  #     - ./services/notification:/app
+  #     - notification_data:/app/data
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   networks:
+  #     - budgetsmart-network
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  # rabbitmq_data:
+  # redis_data:
+  # engine_data:
+  # ml_models:
+  # notification_data:
+
+networks:
+  budgetsmart-network:
+    driver: bridge
