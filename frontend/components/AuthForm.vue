@@ -103,7 +103,7 @@
             <button
               type="button"
               @click="showPassword = !showPassword"
-              class="absolute inset-y-0 right-0 pr-3 flex items-center"
+              class="absolute inset-y-0 right-0 b-3 pr-3 flex items-center"
             >
               <img
                 :src="showPassword ? '/svgs/eye-off.svg' : '/svgs/eye-on.svg'"
@@ -111,6 +111,9 @@
                 class="h-5 w-5 text-gray-400"
               />
             </button>
+
+            <!-- Add Password Strength Indicator here -->
+            <!-- <PasswordStrength class="pt-2" :password="form.password" /> -->
           </div>
 
           <!-- Confirm Password (only for registration) -->
@@ -224,6 +227,12 @@
   const success = ref(false);
 
   const handleSubmit = () => {
+    // Check password strength
+    if (form.password.length < 6) {
+      alert("Password is too short. Please use at least 6 characters.");
+      return;
+    }
+
     // Check password match for registration
     if (props.mode === "register" && form.password !== form.confirmPassword) {
       alert("Passwords do not match");
