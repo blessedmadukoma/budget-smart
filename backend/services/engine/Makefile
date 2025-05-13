@@ -23,7 +23,7 @@ migration:
 
 migrate-up:
 	@echo "Running migrations up..."
-	@go run cmd/migrate/main.go up
+	@go run cmd/migrate/main.go up -verbose
 	@echo "Migrate Up Complete..."
 
 migrate-down:

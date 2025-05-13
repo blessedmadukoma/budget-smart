@@ -3,14 +3,18 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/blessedmadukoma/budgetsmart/engine/cmd/api"
 	"github.com/blessedmadukoma/budgetsmart/engine/config"
 	"github.com/blessedmadukoma/budgetsmart/engine/db"
+	"github.com/blessedmadukoma/budgetsmart/engine/pkg/log"
 )
 
 func main() {
+	logger := log.NewLogger(os.Stdout)
+	logger.SetPrefix("main")
+
 	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		config.Envs.DBUser,
 		config.Envs.DBPassword,
@@ -20,24 +24,24 @@ func main() {
 	db, err := db.NewDBStorage(connStr)
 
 	if err != nil {
-		log.Fatal("error initializing db:", err)
+		logger.WithError(err).Fatal("error initializing db")
 	}
 
-	initStorage(db)
+	initStorage(db, logger)
 
-	server := api.NewAPIServer(config.Envs.Port, db)
+	server := api.NewAPIServer(config.Envs.Port, db, logger)
 
 	if err := server.Run(); err != nil {
-		log.Fatal("error running server:", err)
+		logger.WithError(err).Fatal("error running server")
 	}
 }
 
-func initStorage(db *sql.DB) {
+func initStorage(db *sql.DB, logger *log.Logger) {
 	err := db.Ping()
 
 	if err != nil {
-		log.Fatal(err)
+		logger.WithError(err).Fatal("failed to ping database")
 	}
 
-	log.Println("DB Successfully connected!")
+	logger.Info("DB Successfully connected!")
 }

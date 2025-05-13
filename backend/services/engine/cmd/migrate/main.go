@@ -8,46 +8,49 @@ import (
 	"github.com/blessedmadukoma/budgetsmart/engine/config"
 	"github.com/blessedmadukoma/budgetsmart/engine/db"
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Fatal("Migration direction (up/down) is required")
+	}
+
 	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		config.Envs.DBUser,
 		config.Envs.DBPassword,
 		config.Envs.DBAddress,
 		config.Envs.DBName,
 	)
-	db, err := db.NewDBStorage(connStr)
-
+	_, err := db.NewDBStorage(connStr)
 	if err != nil {
 		log.Fatal("error initializing db:", err)
 	}
 
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	m, err := migrate.New(
+		"file://db/migrations",
+		connStr)
+
 	if err != nil {
-		log.Fatal("error setting postgres instance: ", err)
+		log.Fatalf("Migration initialization error: %v", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://cmd/migrate/migrations",
-		"postgres",
-		driver,
-	)
-	if err != nil {
-		log.Fatal("error setting db instance: ", err)
-	}
+	direction := os.Args[1]
 
-	cmd := os.Args[(len(os.Args) - 1)]
-	if cmd == "up" {
+	if direction == "up" {
+		log.Println("Running migrations up...")
 		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-			log.Fatal("error migrating up: ", err)
+			log.Fatalf("Failed to apply migrations: %v", err)
 		}
-	}
-	if cmd == "down" {
+	} else if direction == "down" {
+		log.Println("Running migrations down...")
 		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
-			log.Fatal("error migrating down: ", err)
+			log.Fatalf("Failed to roll back migrations: %v", err)
 		}
+	} else {
+		log.Fatalf("Invalid direction '%s'. Use 'up' or 'down'", direction)
 	}
+
+	log.Printf("Migration '%s' completed successfully", direction)
 }

@@ -13,7 +13,6 @@ DROP CONSTRAINT IF EXISTS "categories_user_id_fkey";
 ALTER TABLE "budgets"
 DROP CONSTRAINT IF EXISTS "budgets_user_id_fkey";
 
--- Drop tables
 DROP TABLE IF EXISTS "ml_models";
 
 DROP TABLE IF EXISTS "transactions";

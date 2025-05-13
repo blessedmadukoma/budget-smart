@@ -2,43 +2,53 @@ package api
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 
+	"github.com/blessedmadukoma/budgetsmart/engine/internal/auth"
+	"github.com/blessedmadukoma/budgetsmart/engine/internal/common/middleware"
+	"github.com/blessedmadukoma/budgetsmart/engine/pkg/log"
 	"github.com/go-chi/chi/v5"
 )
 
 type APIServer struct {
-	addr string
-	db   *sql.DB
+	addr   string
+	db     *sql.DB
+	logger *log.Logger
 }
 
-func NewAPIServer(addr string, db *sql.DB) *APIServer {
+func NewAPIServer(addr string, db *sql.DB, logger *log.Logger) *APIServer {
 	return &APIServer{
-		addr: addr,
-		db:   db,
+		addr:   addr,
+		db:     db,
+		logger: logger,
 	}
 }
 
-func (s *APIServer) Run() error {
+func (s *APIServer) setupMiddleware() *chi.Mux {
+
 	router := chi.NewRouter()
 
-	// subrouter := router.PathPrefix("/api/v1").Subrouter()
+	m := middleware.NewHttpMiddleware()
 
-	// userStore := user.NewStore(s.db)
-	// userHandler := user.NewHandler(userStore)
-	// userHandler.RegisterRoutes(subrouter)
+	router.Use(func(next http.Handler) http.Handler {
+		return m.CORS(next)
+	})
 
-	// productStore := product.NewStore(s.db)
-	// productHandler := product.NewHandler(productStore)
-	// productHandler.RegisterRoutes(subrouter)
+	return router
+}
 
-	// orderStore := order.NewStore(s.db)
+func (s *APIServer) Run() error {
+	s.logger.SetPrefix("api")
+	router := s.setupMiddleware()
 
-	// cartHandler := cart.NewHandler(orderStore, productStore, userStore)
-	// cartHandler.RegisterRoutes(subrouter)
+	// add sentry or datadog or APIToolKit
 
-	log.Println("Listening on:", s.addr)
+	subrouter := chi.NewRouter()
+	router.Mount("/api/v1", subrouter)
+
+	auth.NewService(subrouter, s.db)
+
+	s.logger.Printf("Listening on: %s", s.addr)
 
 	return http.ListenAndServe(s.addr, router)
 }
