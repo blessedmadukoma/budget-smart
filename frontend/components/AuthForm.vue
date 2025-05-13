@@ -59,6 +59,7 @@
                 v-model="form.firstName"
                 type="text"
                 required
+                autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="First Name"
               />
@@ -70,6 +71,7 @@
                 v-model="form.lastName"
                 type="text"
                 required
+                autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Last Name"
               />
@@ -84,6 +86,7 @@
               v-model="form.email"
               type="email"
               required
+              autocomplete="off"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Email"
             />
@@ -97,6 +100,7 @@
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
               required
+              autocomplete="off"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Password"
             />
@@ -126,6 +130,7 @@
               v-model="form.confirmPassword"
               :type="showPassword ? 'text' : 'password'"
               required
+              autocomplete="off"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Confirm Password"
             />
@@ -251,7 +256,8 @@
 
   const handleGoogleAuth = () => {
     // Implement Google authentication
-    console.log("Google auth initiated");
+    // console.log("Google auth initiated");
+    alert("Coming soon!");
     // In a real application, you would call your auth service here
   };
 
