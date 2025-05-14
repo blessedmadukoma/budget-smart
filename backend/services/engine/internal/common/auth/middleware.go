@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/auth/types"
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/common/cache"
@@ -24,33 +25,43 @@ func NewAuthMiddleware(userRepo userRepo.Repository, cache cache.Cache) AuthMidd
 
 func (m AuthMiddleware) IsAuthenticated(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		// Extract and validate JWT token
 		token, err := jwt.New(r)
 		if err != nil {
 			json.WriteError(w, http.StatusUnauthorized, err)
 			return
 		}
 
-		a, err := m.userRepo.GetByID(token.ID)
+		// Fetch user by ID with timeout
+		a, err := m.userRepo.GetByID(ctx, token.ID)
 		if err != nil {
 			json.WriteError(w, http.StatusUnauthorized, err)
 			return
 		}
+		if a == nil {
+			json.WriteError(w, http.StatusUnauthorized, messages.ErrNotFound)
+			return
+		}
 
+		// Check cached JWT token with timeout
 		var existingToken string
-
-		err = m.cache.Get(context.Background(), cache.JWTTokenKey(a.UID), &existingToken)
+		err = m.cache.Get(ctx, cache.JWTTokenKey(a.UID), &existingToken)
 		if err != nil {
 			json.WriteError(w, http.StatusUnauthorized, err)
 			return
 		}
 
 		if existingToken != token.Raw {
-			json.WriteError(w, http.StatusUnauthorized, err)
+			json.WriteError(w, http.StatusUnauthorized, messages.ErrUnauthorized)
 			return
 		}
 
 		// Set account in context
-		ctx := setAccount(r.Context(), Account{
+		ctx = setAccount(ctx, Account{
 			ID:     token.ID,
 			Status: a.Status,
 		})

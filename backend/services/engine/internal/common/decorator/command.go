@@ -1,6 +1,7 @@
 package decorator
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -18,7 +19,7 @@ func ApplyCommandDecorators[H any](handler CommandHandler[H], logger *logrus.Ent
 }
 
 type CommandHandler[C any] interface {
-	Handle(cmd C) error
+	Handle(ctx context.Context, cmd C) error
 }
 
 func generateActionName(handler any) string {

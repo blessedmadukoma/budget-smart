@@ -1,6 +1,7 @@
 package decorator
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -15,7 +16,7 @@ type commandMetricsDecorator[C any] struct {
 	client MetricsClient
 }
 
-func (d commandMetricsDecorator[C]) Handle(cmd C) (err error) {
+func (d commandMetricsDecorator[C]) Handle(ctx context.Context, cmd C) (err error) {
 	start := time.Now()
 
 	actionName := strings.ToLower(generateActionName(cmd))
@@ -32,7 +33,7 @@ func (d commandMetricsDecorator[C]) Handle(cmd C) (err error) {
 		}
 	}()
 
-	return d.base.Handle(cmd)
+	return d.base.Handle(ctx, cmd)
 }
 
 type queryMetricsDecorator[C any, R any] struct {
@@ -40,7 +41,7 @@ type queryMetricsDecorator[C any, R any] struct {
 	client MetricsClient
 }
 
-func (d queryMetricsDecorator[C, R]) Handle(query C) (result R, err error) {
+func (d queryMetricsDecorator[C, R]) Handle(ctx context.Context, query C) (result R, err error) {
 	start := time.Now()
 
 	actionName := strings.ToLower(generateActionName(query))
@@ -57,5 +58,5 @@ func (d queryMetricsDecorator[C, R]) Handle(query C) (result R, err error) {
 		}
 	}()
 
-	return d.base.Handle(query)
+	return d.base.Handle(ctx, query)
 }

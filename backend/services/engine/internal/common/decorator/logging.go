@@ -1,6 +1,7 @@
 package decorator
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -11,7 +12,7 @@ type commandLoggingDecorator[C any] struct {
 	logger *logrus.Entry
 }
 
-func (d commandLoggingDecorator[C]) Handle(cmd C) (err error) {
+func (d commandLoggingDecorator[C]) Handle(ctx context.Context, cmd C) (err error) {
 	handlerType := generateActionName(cmd)
 
 	logger := d.logger.WithFields(logrus.Fields{
@@ -28,7 +29,7 @@ func (d commandLoggingDecorator[C]) Handle(cmd C) (err error) {
 		}
 	}()
 
-	return d.base.Handle(cmd)
+	return d.base.Handle(ctx, cmd)
 }
 
 type queryLoggingDecorator[C any, R any] struct {
@@ -36,7 +37,7 @@ type queryLoggingDecorator[C any, R any] struct {
 	logger *logrus.Entry
 }
 
-func (d queryLoggingDecorator[C, R]) Handle(cmd C) (result R, err error) {
+func (d queryLoggingDecorator[C, R]) Handle(ctx context.Context, cmd C) (result R, err error) {
 	logger := d.logger.WithFields(logrus.Fields{
 		"query":      generateActionName(cmd),
 		"query_body": fmt.Sprintf("%#v", cmd),
@@ -51,5 +52,5 @@ func (d queryLoggingDecorator[C, R]) Handle(cmd C) (result R, err error) {
 		}
 	}()
 
-	return d.base.Handle(cmd)
+	return d.base.Handle(ctx, cmd)
 }

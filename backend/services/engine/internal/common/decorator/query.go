@@ -1,6 +1,8 @@
 package decorator
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,5 +17,5 @@ func ApplyQueryDecorators[H any, R any](handler QueryHandler[H, R], logger *logr
 }
 
 type QueryHandler[Q any, R any] interface {
-	Handle(q Q) (R, error)
+	Handle(ctx context.Context, q Q) (R, error)
 }

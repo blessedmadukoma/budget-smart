@@ -1,12 +1,15 @@
 package command
 
 import (
-	"errors"
+	"context"
+	"fmt"
 
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/auth/types"
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/common/decorator"
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/user/domain/model"
 	userRepo "github.com/blessedmadukoma/budgetsmart/engine/internal/user/domain/repository"
+	"github.com/blessedmadukoma/budgetsmart/engine/pkg/messages"
+	"github.com/blessedmadukoma/budgetsmart/engine/pkg/password"
 	"github.com/blessedmadukoma/budgetsmart/engine/pkg/validator"
 	"github.com/sirupsen/logrus"
 )
@@ -41,29 +44,44 @@ func NewRegisterHandler(
 	)
 }
 
-func (h registerHandler) Handle(cmd Register) error {
+func (h registerHandler) Handle(ctx context.Context, cmd Register) error {
+	fmt.Println("1")
 	if err := h.validator.ValidateStruct(&cmd); err != nil {
 		return err
 	}
 
-	existingUser, err := h.repo.GetByEmail(cmd.Email)
+	fmt.Println("2")
+	existingUser, err := h.repo.GetByEmail(ctx, cmd.Email)
 	if err != nil {
-		return err
+		return messages.ErrExists
 	}
+	fmt.Println("3")
 	if existingUser != nil {
-		return errors.New("user already exists")
+		return messages.ErrExists
+	}
+	fmt.Println("4")
+
+	var hashedPassword string
+
+	if cmd.AuthProvider == "local" {
+		passwordHash, err := password.HashPassword(cmd.Password)
+		if err != nil {
+			return messages.ErrHashPassword
+		}
+
+		hashedPassword = passwordHash
 	}
 
 	user := &model.User{
 		FirstName:    cmd.FirstName,
 		LastName:     cmd.LastName,
 		Email:        cmd.Email,
-		Password:     cmd.Password,
+		Password:     hashedPassword,
 		Status:       types.AccountStatus.PENDING,
 		AuthProvider: cmd.AuthProvider,
 		GoogleID:     cmd.GoogleID,
 		GoogleToken:  cmd.GoogleToken,
 	}
 
-	return h.repo.Create(user)
+	return h.repo.Create(ctx, user)
 }

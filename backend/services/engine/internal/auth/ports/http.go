@@ -1,7 +1,9 @@
 package ports
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/auth/app"
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/auth/app/command"
@@ -34,9 +36,12 @@ func (h HttpServer) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.app.Commands.Register.Handle(c)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	err := h.app.Commands.Register.Handle(ctx, c)
 	if err != nil {
-		json.WriteError(w, http.StatusBadRequest, messages.ErrBadRequest)
+		json.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 

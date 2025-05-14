@@ -13,6 +13,7 @@ var (
 	ErrMissingRequestBody    = errors.New("missing request body")
 	ErrInternalServer        = errors.New("internal server error")
 	ErrValidation            = errors.New("validation error")
+	ErrHashPassword          = errors.New("failed to hash password")
 	ErrWrongPassword         = errors.New("wrong password")
 	ErrThrottleTryAgainLater = errors.New("please wait for few minutes, try again later")
 )

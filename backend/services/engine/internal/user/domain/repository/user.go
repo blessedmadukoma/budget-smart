@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/user/adapters"
@@ -8,17 +9,10 @@ import (
 )
 
 type Repository interface {
-	// Create(firstname, lastname, email, password string) error
-	// Create(firstname, lastname, email, password string) error
-	// Create(email string) error
-	// Create(u *model.User) error
-	Create(u *model.User) error
-	GetByID(id uint) (*model.User, error)
-	GetByEmail(email string) (*model.User, error)
-	// GetByUID(uid string) (*types.Account, error)
-	// GetByEmail(email string) (*types.Account, error)
-	// GetByUsername(username string) (*types.Account, error)
-	// GetByUsernameAndID(username string, id uint) (map[string]interface{}, error)
+	Create(ctx context.Context, u *model.User) error
+	GetByID(ctx context.Context, id uint) (*model.User, error)
+	// GetByUID(uid string) (*model.User, error)
+	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	// ListByUserName(username string, id uint) ([]map[string]interface{}, error)
 	// IsUserNameExist(username string, id uint) (bool, error)
 
