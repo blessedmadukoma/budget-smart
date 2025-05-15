@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/user/domain/model"
-	"github.com/blessedmadukoma/budgetsmart/engine/pkg/password"
 	"github.com/blessedmadukoma/budgetsmart/engine/pkg/uuid"
 	"github.com/lib/pq"
 )
@@ -149,13 +148,9 @@ func (r *UserRepository) prepareUserInsertQuery(payload model.User) (string, []i
 
 	switch payload.AuthProvider {
 	case "local":
-		hashedPassword, err := password.HashPassword(payload.Password)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to hash password: %w", err)
-		}
 		authFields = "password, status, auth_provider"
 		authValues = fmt.Sprintf("$%d, $%d, $%d", nextArgIndex, nextArgIndex+1, nextArgIndex+2)
-		args = append(args, hashedPassword, "PENDING", "local")
+		args = append(args, payload.Password, "PENDING", "local")
 		nextArgIndex += 3
 
 	case "google":

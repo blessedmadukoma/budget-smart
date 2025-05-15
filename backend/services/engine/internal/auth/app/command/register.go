@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/auth/types"
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/common/decorator"
@@ -45,21 +44,18 @@ func NewRegisterHandler(
 }
 
 func (h registerHandler) Handle(ctx context.Context, cmd Register) error {
-	fmt.Println("1")
 	if err := h.validator.ValidateStruct(&cmd); err != nil {
 		return err
 	}
 
-	fmt.Println("2")
 	existingUser, err := h.repo.GetByEmail(ctx, cmd.Email)
 	if err != nil {
 		return messages.ErrExists
 	}
-	fmt.Println("3")
+
 	if existingUser != nil {
 		return messages.ErrExists
 	}
-	fmt.Println("4")
 
 	var hashedPassword string
 

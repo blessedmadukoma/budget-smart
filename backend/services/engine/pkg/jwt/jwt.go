@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	_jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )
 
@@ -21,6 +21,7 @@ type JWT struct {
 	Raw        string `json:"raw,omitempty"`
 }
 
+// Parse JWT from Authorization header
 func New(r *http.Request) (*JWT, error) {
 	bearerToken := r.Header.Get("Authorization")
 	if len(strings.Split(bearerToken, " ")) == 2 {
@@ -43,33 +44,45 @@ func New(r *http.Request) (*JWT, error) {
 		jwt.Raw = raw
 
 		return jwt, nil
-
 	}
 	return nil, fmt.Errorf("no bearer token")
 }
 
-func (j JWT) Create(id uint, ip string) (string, error) {
-
-	jwt := JWT{
+// Create a new JWT token (standalone function for token generation)
+func Create(id uint, ip string, secret string, expirationInSeconds int) (string, error) {
+	// Create JWT struct with initial data
+	jwtData := JWT{
 		ID:         id,
 		Authorized: true,
 		ClientIp:   ip,
-		CreatedAt:  time.Now().String(),
+		CreatedAt:  time.Now().UTC().Format(time.RFC3339),
 		Identifer:  uuid.New().String(),
 	}
 
-	var claims _jwt.MapClaims
-
-	if err := json.Unmarshal(jwt.byte(), &claims); err != nil {
-		return "", err
+	// Create claims directly
+	claims := jwt.MapClaims{
+		"id":         jwtData.ID,
+		"authorized": jwtData.Authorized,
+		"client_ip":  jwtData.ClientIp,
+		"created_at": jwtData.CreatedAt,
+		"identifer":  jwtData.Identifer,
+		"exp":        time.Now().Add(time.Second * time.Duration(expirationInSeconds)).Unix(),
 	}
 
-	token := _jwt.NewWithClaims(_jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("APP_SECRET")))
+	// Create token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Sign token with secret
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+
+	return tokenString, nil
 }
 
-func get(claims *_jwt.MapClaims) (*JWT, error) {
-	claimByte, _ := json.Marshal(&claims)
+func get(claims *jwt.MapClaims) (*JWT, error) {
+	claimByte, _ := json.Marshal(claims)
 
 	var jt JWT
 
@@ -79,25 +92,21 @@ func get(claims *_jwt.MapClaims) (*JWT, error) {
 
 	return &jt, nil
 }
-func token(raw string) (*_jwt.Token, error) {
-	return _jwt.Parse(raw, func(token *_jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*_jwt.SigningMethodHMAC); !ok {
+
+func token(raw string) (*jwt.Token, error) {
+	return jwt.Parse(raw, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv("APP_SECRET")), nil
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 }
 
-func validate(token *_jwt.Token) (*_jwt.MapClaims, error) {
-	claims, ok := token.Claims.(_jwt.MapClaims)
-	if !ok && !token.Valid {
+func validate(token *jwt.Token) (*jwt.MapClaims, error) {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
 
 	return &claims, nil
-}
-
-func (j JWT) byte() []byte {
-	b, _ := json.Marshal(&j)
-	return b
 }

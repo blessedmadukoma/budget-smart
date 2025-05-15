@@ -1,8 +1,9 @@
 package types
 
 type LoginInput struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	Email        string `json:"email" validate:"required,email"`
+	Password     string `json:"password" validate:"required"`
+	AuthProvider string `json:"authProvider" validate:"required"`
 }
 
 type AccountStatusType string

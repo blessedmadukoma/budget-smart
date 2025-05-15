@@ -51,6 +51,7 @@ func (m AuthMiddleware) IsAuthenticated(next http.Handler) http.Handler {
 		var existingToken string
 		err = m.cache.Get(ctx, cache.JWTTokenKey(a.UID), &existingToken)
 		if err != nil {
+
 			json.WriteError(w, http.StatusUnauthorized, err)
 			return
 		}

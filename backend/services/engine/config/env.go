@@ -16,6 +16,8 @@ type Config struct {
 	DBAddress              string
 	DBName                 string
 	LoggerLevel            string
+	REDIS_URL              string
+	IPWhiteLists           string
 	JWTSecret              string
 	JWTExpirationInSeconds int64
 }
@@ -26,14 +28,16 @@ func initConfig() Config {
 	godotenv.Load()
 
 	return Config{
-		PublicHost:             getEnv("HOST", "http://localhost"),
-		Port:                   getEnv("PORT", "8000"),
-		DBUser:                 getEnv("DB_USER", "joker"),
-		DBPassword:             getEnv("DB_PASSWORD", "cracks_jokes"),
+		PublicHost:             getEnv("HOST", ""),
+		Port:                   getEnv("PORT", ""),
+		DBUser:                 getEnv("DB_USER", ""),
+		DBPassword:             getEnv("DB_PASSWORD", ""),
 		DBAddress:              fmt.Sprintf("%s:%s", getEnv("DB_HOST", "127.0.0.1"), getEnv("DB_PORT", "5432")),
-		DBName:                 getEnv("DB_NAME", "ecom"),
+		DBName:                 getEnv("DB_NAME", ""),
+		REDIS_URL:              getEnv("REDIS_URL", ""),
 		LoggerLevel:            getEnv("LOG_LEVEL", "info"),
-		JWTSecret:              getEnv("JWT_SECRET", "not-secret-secret-anymore?"),
+		IPWhiteLists:           getEnv("IP_WHITELISTS", ""),
+		JWTSecret:              getEnv("JWT_SECRET", ""),
 		JWTExpirationInSeconds: getEnvAsInt("JWT_EXPIRY", 3600*24*7), // 7 days
 	}
 }

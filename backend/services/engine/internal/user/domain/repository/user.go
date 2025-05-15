@@ -11,7 +11,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, u *model.User) error
 	GetByID(ctx context.Context, id uint) (*model.User, error)
-	// GetByUID(uid string) (*model.User, error)
+	GetByUID(ctx context.Context, uid string) (*model.User, error)
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	// ListByUserName(username string, id uint) ([]map[string]interface{}, error)
 	// IsUserNameExist(username string, id uint) (bool, error)

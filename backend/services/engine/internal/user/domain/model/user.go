@@ -12,12 +12,12 @@ type User struct {
 	FirstName    string                  `json:"firstName"`
 	LastName     string                  `json:"lastName"`
 	Email        string                  `json:"email"`
-	Password     string                  `json:"password"`
+	Password     string                  `json:"-"`
 	Status       types.AccountStatusType `json:"status"`
 	CreatedAt    time.Time               `json:"createdAt"`
 	AuthProvider string                  `json:"authProvider"`
-	GoogleID     string                  `json:"googleId"`
-	GoogleToken  string                  `json:"googleToken"`
+	GoogleID     string                  `json:"-"`
+	GoogleToken  string                  `json:"-"`
 }
 
 // Domain methods

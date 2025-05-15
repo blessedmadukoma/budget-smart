@@ -12,6 +12,7 @@ import (
 	"time"
 
 	httpauth "github.com/abbot/go-http-auth"
+	"github.com/blessedmadukoma/budgetsmart/engine/config"
 	"github.com/blessedmadukoma/budgetsmart/engine/internal/common/auth"
 	"github.com/blessedmadukoma/budgetsmart/engine/pkg/json"
 	"github.com/blessedmadukoma/budgetsmart/engine/pkg/messages"
@@ -19,12 +20,14 @@ import (
 )
 
 type HttpMiddleware struct {
+	config config.Config
 }
 
-func NewHttpMiddleware() HttpMiddleware {
-	return HttpMiddleware{}
+func NewHttpMiddleware(cfg config.Config) HttpMiddleware {
+	return HttpMiddleware{
+		config: cfg,
+	}
 }
-
 
 func (m HttpMiddleware) BasicAuth(next http.Handler) http.Handler {
 	htpasswd := httpauth.HtpasswdFileProvider("./creds/.htpasswd")
@@ -49,8 +52,38 @@ func (m HttpMiddleware) BasicAuth(next http.Handler) http.Handler {
 // CORS middleware for Chi
 func (m HttpMiddleware) CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		// origin := r.Header.Get("Origin")
+
+		// // Convert IPWhiteLists to a slice of allowed origins
+		// allowedIPs := strings.Split(m.config.IPWhiteLists, ",")
+		// var allowedOrigins []string
+		// for _, ip := range allowedIPs {
+		// 	ip = strings.TrimSpace(ip)
+		// 	if ip != "" {
+		// 		// Assume a default port (e.g., 3000) to create a valid origin
+		// 		allowedOrigins = append(allowedOrigins, fmt.Sprintf("http://%s:3000", ip))
+		// 	}
+		// }
+
+		// // Check if the origin matches any allowed origin
+		// var isAllowed bool
+		// for _, allowedOrigin := range allowedOrigins {
+		// 	if origin == allowedOrigin {
+		// 		isAllowed = true
+		// 		w.Header().Set("Access-Control-Allow-Origin", origin)
+		// 		break
+		// 	}
+		// }
+
+		// if !isAllowed && origin != "" {
+		// 	w.WriteHeader(http.StatusForbidden)
+		// 	json.WriteError(w, http.StatusForbidden, fmt.Errorf("CORS policy: Origin %s not allowed", origin))
+		// 	return
+		// }
+
+		w.Header().Set("Access-Control-Allow-Origin", "*") // because my allow credentials is set to true
+		w.Header().Set("Access-Control-Allow-Credentials", "false")
+		// w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, Api-Version, Platform")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH, DELETE")
 
@@ -129,6 +162,21 @@ func (m HttpMiddleware) Throttle(limit uint64) func(http.Handler) http.Handler {
 	}
 }
 
+func (m HttpMiddleware) EnhanceContext(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // Get client IP
+        clientIP := getClientIP(r)
+        
+        // Create an enhanced context with both values
+        ctx := r.Context()
+        ctx = context.WithValue(ctx, "httpResponseWriter", w)
+        ctx = context.WithValue(ctx, "clientIP", clientIP)
+        
+        // Continue with the enhanced context
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+
 // IsIpWhitelisted middleware for Chi
 func (m HttpMiddleware) IsIpWhitelisted(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +196,7 @@ func (m HttpMiddleware) IsIpWhitelisted(next http.Handler) http.Handler {
 		if !containsIP(allowedIPs, clientIP) {
 			errMsg := fmt.Sprintf("Access denied for IP: %s", clientIP)
 			w.WriteHeader(http.StatusUnauthorized)
-			json.WriteError(w, http.StatusUnauthorized, fmt.Errorf(errMsg))
+			json.WriteError(w, http.StatusUnauthorized, fmt.Errorf("%s", errMsg))
 			return
 		}
 

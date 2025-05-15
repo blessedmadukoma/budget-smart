@@ -7,6 +7,7 @@ var (
 	ErrNotFound              = errors.New("resource not found")
 	ErrConflict              = errors.New("resource conflict")       // conflict due to resource state or concurrent changes or incompatible changes
 	ErrExists                = errors.New("resource already exists") // cannot be created again
+	ErrNotExists                = errors.New("does not exist")
 	ErrUnauthorized          = errors.New("unauthorized access")
 	ErrForbidden             = errors.New("access forbidden")
 	ErrBadRequest            = errors.New("bad request")
@@ -14,7 +15,8 @@ var (
 	ErrInternalServer        = errors.New("internal server error")
 	ErrValidation            = errors.New("validation error")
 	ErrHashPassword          = errors.New("failed to hash password")
-	ErrWrongPassword         = errors.New("wrong password")
+	ErrInvalidCredentials    = errors.New("invalid credentials")
+	ErrInvalidPassword    = errors.New("invalid password")
 	ErrThrottleTryAgainLater = errors.New("please wait for few minutes, try again later")
 )
 
