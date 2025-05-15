@@ -4,17 +4,19 @@
 
 <script setup>
   import { useRouter } from "nuxt/app";
+  import no_auth from "~/middleware/no_auth";
 
   definePageMeta({
     layout: false,
+    middleware: no_auth,
   });
 
   const router = useRouter();
+  const notify = useNotification();
 
   const handleLoginSuccess = (data) => {
-    console.log("User logged in:", data);
+    notify.toast.success("user login successful!");
 
-    // Navigate to dashboard or home page after login
-    router.push("/");
+    router.push("/dashboard");
   };
 </script>

@@ -11,9 +11,9 @@
         <ul class="flex space-x-6 text-gray-500 dark:text-gray-400">
           <li
             :class="{
-              'hover:text-gray-900  hover:dark:text-gray-100 cursor-pointer underline':
+              'hover:text-gray-900 hover:dark:text-gray-100 cursor-pointer underline':
                 $route.path === '/',
-              'hover:text-gray-900  hover:dark:text-gray-100 cursor-pointer':
+              'hover:text-gray-900 hover:dark:text-gray-100 cursor-pointer':
                 $route.path !== '/',
             }"
           >
@@ -21,9 +21,9 @@
           </li>
           <li
             :class="{
-              'hover:text-gray-900  hover:dark:text-gray-100 cursor-pointer underline':
+              'hover:text-gray-900 hover:dark:text-gray-100 cursor-pointer underline':
                 $route.path === '/register',
-              'hover:text-gray-900  hover:dark:text-gray-100 cursor-pointer':
+              'hover:text-gray-900 hover:dark:text-gray-100 cursor-pointer':
                 $route.path !== '/register',
             }"
           >
@@ -31,13 +31,18 @@
           </li>
           <li
             :class="{
-              'hover:text-gray-900  hover:dark:text-gray-100 cursor-pointer underline':
+              'hover:text-gray-900 hover:dark:text-gray-100 cursor-pointer underline':
                 $route.path === '/login',
-              'hover:text-gray-900  hover:dark:text-gray-100 cursor-pointer':
+              'hover:text-gray-900 hover:dark:text-gray-100 cursor-pointer':
                 $route.path !== '/login',
             }"
           >
-            <NuxtLink to="/login">Log In</NuxtLink>
+            <client-only>
+              <button v-if="userStore.isAuthenticated" @click="handleLogout">
+                Log out
+              </button>
+              <NuxtLink v-else to="/login">Log In</NuxtLink>
+            </client-only>
           </li>
           <li>
             <button @click="toggleColorMode" class="ml-2">
@@ -52,13 +57,27 @@
 </template>
 
 <script setup>
+  import { useRouter } from "nuxt/app";
   import { computed } from "vue";
+  import { useStore } from "~/store/store";
 
   const colorMode = useColorMode();
+  const userStore = useStore();
+  const router = useRouter();
 
   const isDark = computed(() => colorMode.value === "dark");
 
   function toggleColorMode() {
     colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
   }
+
+  const handleLogout = async () => {
+    try {
+      await userStore.logout();
+
+      router.push("/login");
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 </script>

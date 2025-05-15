@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+    class="flex flex-col items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900"
   >
     <!-- Logo -->
     <div class="mb-6">
@@ -9,12 +9,14 @@
 
     <!-- Auth Card -->
     <div class="w-full max-w-md">
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 p-8"
+      >
         <!-- Header -->
         <h1 class="text-2xl font-bold mb-1">
           {{ mode === "login" ? "Sign In" : "Sign Up" }}
         </h1>
-        <p class="text-gray-600 mb-6">
+        <p class="text-gray-600 dark:text-gray-400 mb-6">
           {{
             mode === "login"
               ? "Welcome back to BudgetSmart!"
@@ -26,7 +28,7 @@
         <CommonButton
           variant="secondary"
           fullWidth
-          className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-800 mb-4"
+          class="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100 mb-4"
           @click="handleGoogleAuth"
         >
           <img
@@ -44,7 +46,10 @@
             <div class="w-full border-t border-gray-300"></div>
           </div>
           <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-white text-gray-500">or</span>
+            <span
+              class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300"
+              >or</span
+            >
           </div>
         </div>
 
@@ -60,7 +65,7 @@
                 type="text"
                 required
                 autocomplete="off"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
                 placeholder="First Name"
               />
             </div>
@@ -72,7 +77,7 @@
                 type="text"
                 required
                 autocomplete="off"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
                 placeholder="Last Name"
               />
             </div>
@@ -87,7 +92,7 @@
               type="email"
               required
               autocomplete="off"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
               placeholder="Email"
             />
           </div>
@@ -101,7 +106,7 @@
               :type="showPassword ? 'text' : 'password'"
               required
               autocomplete="off"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
               placeholder="Password"
             />
             <button
@@ -131,13 +136,13 @@
               :type="showPassword ? 'text' : 'password'"
               required
               autocomplete="off"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
               placeholder="Confirm Password"
             />
           </div>
 
-          <!-- Success Message (conditionally shown) -->
-          <div v-if="success" class="flex items-center mb-4">
+          <!-- Cloudflare Message -->
+          <!-- <div class="flex items-center mb-4">
             <div class="bg-green-100 rounded-full p-1">
               <svg
                 class="w-5 h-5 text-green-600"
@@ -153,7 +158,6 @@
             </div>
             <span class="ml-2 text-green-700">Success!</span>
 
-            <!-- Cloudflare -->
             <div class="flex items-center ml-auto">
               <img
                 src="https://www.cloudflare.com/img/logo-cloudflare-dark.svg"
@@ -165,7 +169,7 @@
                 <a href="#" class="text-gray-600 hover:underline">Terms</a>
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- Actions -->
           <div class="flex justify-between items-center mt-6">
@@ -173,8 +177,21 @@
               Back to Home
             </CommonButton>
 
-            <CommonButton type="submit" variant="primary" size="medium">
-              {{ mode === "login" ? "Sign In" : "Sign Up" }}
+            <CommonButton
+              type="submit"
+              variant="primary"
+              size="medium"
+              :disabled="loading"
+              :class="{
+                'cursor-not-allowed bg-gray-500 hover:bg-gray-500': loading,
+              }"
+            >
+              <template v-if="loading">
+                <loader class="w-5 h-5 mx-2 inline-block" />
+              </template>
+              <template v-else>
+                {{ mode === "login" ? "Sign In" : "Sign Up" }}
+              </template>
             </CommonButton>
           </div>
         </form>
@@ -208,6 +225,10 @@
 <script setup>
   import { useRouter } from "nuxt/app";
   import { reactive, ref } from "vue";
+  import { useAuthService } from "~/composables/useAuthService";
+  import { useNotification } from "~/composables/useNotification";
+  import { useStore } from "~/store/store";
+  import loader from "./common/loader.vue";
 
   const props = defineProps({
     mode: {
@@ -219,6 +240,7 @@
 
   const emit = defineEmits(["success"]);
   const router = useRouter();
+  const notify = useNotification();
 
   const form = reactive({
     firstName: "",
@@ -229,39 +251,88 @@
   });
 
   const showPassword = ref(false);
+  const loading = ref(false);
   const success = ref(false);
 
-  const handleSubmit = () => {
-    // Check password strength
+  const authService = useAuthService();
+  const store = useStore();
+
+  const handleSubmit = async (event) => {
     if (form.password.length < 6) {
-      alert("Password is too short. Please use at least 6 characters.");
+      notify.toast.error(
+        "Password is too short. Please use at least 6 characters."
+      );
       return;
     }
 
-    // Check password match for registration
     if (props.mode === "register" && form.password !== form.confirmPassword) {
-      alert("Passwords do not match");
+      notify.toast.error("Passwords do not match");
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
+    loading.value = true;
+
+    try {
+      if (props.mode === "login") {
+        handleLogin(form);
+        loading.value = false;
+      } else {
+        handleRegister(form);
+        loading.value = false;
+      }
+    } catch (err) {
+      notify.toast.error("Authentication error:", err);
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      await authService.register(form);
+
+      // if successful, inform user should check email for OTP or something...
+
+      const user = await authService.getUser();
+
+      store.setUser(user);
+
+      goToDashboard();
+    } catch (error) {}
+  };
+
+  const handleLogin = async (form) => {
+    try {
+      const response = await authService.login({
+        email: form.email,
+        password: form.password,
+      });
+
+      await store.checkAuth();
+
       success.value = true;
+
       emit("success", {
         email: form.email,
         mode: props.mode,
       });
-    }, 1000);
+
+      router.push("/dashboard");
+    } catch (error) {
+      const errorMessage = error.message || "Authentication failed";
+
+      notify.toast.error(`Authentication failed: ${errorMessage}`);
+    }
   };
 
   const handleGoogleAuth = () => {
-    // Implement Google authentication
-    // console.log("Google auth initiated");
-    alert("Coming soon!");
-    // In a real application, you would call your auth service here
+    console.log("handling oauth");
+
+    // $auth.oauthLogin("google");
   };
 
   const goToHome = () => {
     router.push("/");
+  };
+  const goToDashboard = () => {
+    router.push("/dashboard");
   };
 </script>

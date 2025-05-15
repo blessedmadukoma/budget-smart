@@ -4,6 +4,6 @@
   >
     <LayoutNavBar />
     <slot />
-    <AppFooter />
+    <LayoutAppFooter />
   </div>
 </template>

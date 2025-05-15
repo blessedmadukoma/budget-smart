@@ -10,3 +10,11 @@
     </div>
   </div>
 </template>
+
+<script setup>
+  import no_auth from "~/middleware/no_auth";
+
+  definePageMeta({
+    middleware: no_auth,
+  });
+</script>
