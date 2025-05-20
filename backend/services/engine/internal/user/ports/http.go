@@ -21,7 +21,7 @@ func NewHttpServer(router *chi.Mux, app app.Application, a auth.AuthMiddleware, 
 	s := &HttpServer{app: app}
 
 	router.Route("/users", func(r chi.Router) {
-		r.Use(a.IsAuthenticated)
+		r.Use(a.IsAuthenticated, m.SingleRequest, m.Throttle(2))
 		r.Get("/me", s.GetUser)
 	})
 
