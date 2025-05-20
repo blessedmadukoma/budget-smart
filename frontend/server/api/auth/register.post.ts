@@ -13,6 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
         lastName,
         email,
         password,
+        authProvider: "local",
       },
     });
 

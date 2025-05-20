@@ -13,10 +13,11 @@
   });
 
   const router = useRouter();
+  const notify = useNotification();
 
   const handleRegisterSuccess = (data) => {
-    console.log("User registered:", data);
+    notify.toast.success("user registration successful!");
 
-    router.push("/dashboard");
+    router.push("/login");
   };
 </script>

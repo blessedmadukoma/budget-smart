@@ -64,6 +64,7 @@
   const colorMode = useColorMode();
   const userStore = useStore();
   const router = useRouter();
+  const notify = useNotification();
 
   const isDark = computed(() => colorMode.value === "dark");
 
@@ -74,6 +75,8 @@
   const handleLogout = async () => {
     try {
       await userStore.logout();
+
+      notify.toast.success("logout successful!");
 
       router.push("/login");
     } catch (err) {
