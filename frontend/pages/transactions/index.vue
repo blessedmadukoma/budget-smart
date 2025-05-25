@@ -8,11 +8,13 @@
           <h1 class="text-3xl font-bold capitalize">{{ currentPage }}</h1>
         </section>
         <div class="flex space-x-2">
-          <LayoutDashboardHeader />
+          <LayoutTransactionsHeader />
         </div>
       </div>
 
-      <p>Welcome to your Dashboard, {{ user.firstName }} - {{ user.email }}</p>
+      <p>
+        Welcome to your Transactions, {{ user.firstName }} - {{ user.email }}
+      </p>
     </div>
     <div v-else>
       <p>Not logged in. Redirecting...</p>
@@ -28,11 +30,11 @@
   definePageMeta({
     middleware: "auth",
     layout: "logged-in",
-    name: "dashboard",
+    name: "transactions",
   });
 
   const route = useRoute();
-  const currentPage = computed(() => route.name || "Dashboard");
+  const currentPage = computed(() => route.name || "Transactions");
 
   const userStore = useStore();
   const user = ref(userStore.user);
